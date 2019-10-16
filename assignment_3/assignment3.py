@@ -2,7 +2,7 @@ import random
 import codecs
 import string
 from nltk.stem.porter import PorterStemmer
-
+from gensim.corpora import Dictionary
 random.seed(123)
 
 
@@ -39,5 +39,35 @@ def process_text(text_file):
     return tokenize
 
 
+def build_dictionary(text_file, stop_words):
+    """
+    This function takes a text file and a file of stop words, and builds dictionary with pairs of word indexes and word
+    counts in every paragraph.
+
+    :param text_file: Input text file
+    :param stop_words: Text file of stop words
+    :return: Corpus object (=list of paragraphs); each paragraph is a list of pairs (word-index, word-count)
+    """
+    words = process_text(text_file)
+    dictionary = Dictionary(words)
+
+    # Gather all stop words
+    with codecs.open(stop_words, "r", "utf-8") as stop_w:
+        stop_words = stop_w.read().split(',')
+
+    # Gather all stop word ids
+    stop_word_ids = []
+    for i in range(len(dictionary)):
+        if dictionary[i] in stop_words:     # Check if stop word exists in dictionary
+            stop_word_ids.append(dictionary.token2id[dictionary[i]])
+    dictionary.filter_tokens(stop_word_ids)     # Filter out all stop words
+
+    bags_of_words = []
+    for paragraph in words:
+        bags_of_words.append(dictionary.doc2bow(paragraph))
+
+    return bags_of_words
+
+
 if __name__ == "__main__":
-    tokenize = process_text("pg3300.txt")
+    build_dictionary("text.txt", "stopwords.txt")
